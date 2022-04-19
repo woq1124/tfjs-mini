@@ -27,14 +27,12 @@ export async function getPredictFromImage(image, model) {
     return acc;
   }, []);
 
-  const foo = imageArray.reduce((acc, cur, index) => {
+  console.log('imageArray', imageArray.reduce((acc, cur, index) => {
     if (index % 28) {
       return `${acc}${cur ? cur.toFixed(2) : '    '} `;
     }
     return `${acc}${'\r\n'}${cur ? cur.toFixed(2) : '    '} `;
-  }, '');
-
-  console.log('imageArray', foo);
+  }, ''));
 
   const batchImagesArray = new Float32Array(784);
   batchImagesArray.set(imageArray);
