@@ -10,24 +10,30 @@ export async function getPredictFromImage(image, model) {
   const imageData = resizeContext.getImageData(0, 0, 28, 28);
 
   const imageArray = imageData.data.reduce((acc, cur, i, array) => {
-    if (!((i + 1) % 4)) {
-      const red = array[i - 3] / 255;
-      const green = array[i - 2] / 255;
-      const blue = array[i - 1] / 255;
-      const alpha = cur / 255;
+    if (!(i % 4)) {
+      const red = cur;
+      const green = array[i + 1];
+      const blue = array[i + 2];
+      const alpha = array[i + 3];
 
-      const revision = (1 - red) * (1 - blue) * (1 - green);
+      const lightness = (red + green + blue) / (3 * 255);
 
-      if (revision > 0.07) {
-        acc.push(alpha);
-      } else {
-        acc.push(0);
-      }
+      acc.push((1 - lightness) * (alpha / 255));
     }
     return acc;
   }, []);
 
-  console.log('imageArray', imageArray.reduce((acc, cur, index) => {
+  const darknessAverage = imageArray.reduce((acc, cur) => acc + cur, 0) / imageArray.length;
+
+  // 표준편차 구해서 그 오차 미만인 데이터는 제거하도록?
+  const refined = imageArray.map(
+    (value) => (
+      Math.abs(value - darknessAverage) >= 0.1
+        ? value * (1 + darknessAverage) * (1 + darknessAverage)
+        : value * (1 - darknessAverage) * (1 - darknessAverage)),
+  );
+
+  console.log('imageArray', refined.reduce((acc, cur, index) => {
     if (index % 28) {
       return `${acc}${cur ? cur.toFixed(2) : '    '} `;
     }
@@ -35,7 +41,7 @@ export async function getPredictFromImage(image, model) {
   }, ''));
 
   const batchImagesArray = new Float32Array(784);
-  batchImagesArray.set(imageArray);
+  batchImagesArray.set(refined);
 
   const testData = tf.tensor2d(batchImagesArray, [1, 784]);
   const testxs = testData.reshape([1, 28, 28, 1]);

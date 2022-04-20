@@ -65,6 +65,12 @@ export function setDom(model) {
     appendPredictResult(predicted, resizedCanvas);
   });
 
+  document.querySelector('#clear').addEventListener('click', async (e) => {
+    e.preventDefault();
+
+    document.querySelector('#result').innerHTML = '';
+  });
+
   document.querySelector('#imageFile').addEventListener('change', async (e) => {
     e.preventDefault();
 
